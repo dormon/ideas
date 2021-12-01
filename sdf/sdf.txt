@@ -1,0 +1,84 @@
+float plane(vec3 p,vec2 a){
+  return dot(p,vec3(a,1.f));
+}
+
+float circle(vec3 p,vec2 a){
+  return distance(vec2(p),a)-p.z;
+}
+
+vec4 distanceToColor(float d){
+  float f = sin(d*100.f)*.5f+.5f;
+  if(d>0.f)return vec4(f,0,0,1);
+  return vec4(0,0,f,1);
+}
+
+float soft_min(float a, float b, float r) {
+  float e = max(r - abs(a - b), 0.f);
+  return min(a, b) - e*e*0.25/r;
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+
+    vec2 uv = fragCoord/iResolution.xy;
+
+
+    vec3 p0 = vec3(0,1.,-.5);
+    vec3 p1 = vec3(0,-1.,.3);
+    vec3 p2 = vec3(-1,0,.3);
+    vec3 p3 = vec3(1,0,-.5);
+    
+    vec3 c0 = vec3(.5,.5,.1);
+    vec3 c1 = vec3(.55,.5,.3);
+
+    float d0 = plane(p0,uv);
+    float d1 = plane(p1,uv);
+    float d2 = plane(p2,uv);
+    float d3 = plane(p3,uv);
+    
+    float d4 = circle(c0,uv);
+    float d5 = circle(c1,uv);
+    
+    float d01 = max(d0,d1);
+    float d23 = max(d2,d3);
+    
+    float d0123 = max(d01,d23);
+    
+    
+    
+    fragColor = distanceToColor(d0);return;
+    fragColor = distanceToColor(d1);
+    fragColor = distanceToColor(d2);
+    fragColor = distanceToColor(d3);
+    
+    fragColor = distanceToColor(d01);
+
+    fragColor = distanceToColor(d23);
+    
+    
+    fragColor = distanceToColor(d0123);
+    
+    fragColor = distanceToColor(d4);
+    
+    //intersection
+    fragColor = distanceToColor(max(d4,d0123));
+    
+    //union
+    fragColor = distanceToColor(min(d4,d0123));
+    
+    //diference
+    fragColor = distanceToColor(max(d0123,-d4));
+    
+    //xor
+    fragColor = distanceToColor(max(min(d0123,d4),-max(d0123,d4)));return;
+    
+    fragColor = distanceToColor(max(d5,-d4));return;
+    
+    //-min(a,b) = max(-a,-b)
+    //-max(a,b) = min(-a,-b)
+    
+    
+    fragColor = distanceToColor(soft_min(d4,d0123,iMouse.y/300.f));
+    
+    
+}
